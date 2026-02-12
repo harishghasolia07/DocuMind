@@ -3,8 +3,6 @@ import { prisma } from '@/lib/prisma';
 import { openai } from '@/lib/openai';
 
 export const dynamic = 'force-dynamic';
-// Force Node.js runtime for database Pool connections
-export const runtime = 'nodejs';
 
 interface StatusCheck {
   status: 'ok' | 'error';

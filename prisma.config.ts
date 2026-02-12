@@ -9,7 +9,7 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
+    // Use Supabase connection pooler URL for serverless/edge compatibility
     url: process.env["DATABASE_URL"],
-    // directUrl: process.env["DIRECT_URL"],
   },
 });
