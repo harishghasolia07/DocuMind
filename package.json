@@ -11,7 +11,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio"
   },
-  "description": "DocuMind - A RAG application for document-based question answering",
+  "description": "DocuMind - A multi-user RAG application with authentication for secure document-based question answering",
   "dependencies": {
     "@clerk/nextjs": "^6.37.3",
     "@prisma/adapter-pg": "^7.4.0",

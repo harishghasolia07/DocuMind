@@ -1,31 +1,39 @@
 # DocuMind
 
-A production-ready RAG (Retrieval-Augmented Generation) application that allows users to upload text documents, generate embeddings, and ask questions using AI-powered search and OpenAI's language models.
+A production-ready RAG (Retrieval-Augmented Generation) application with multi-user authentication that allows users to upload documents, generate embeddings, and ask questions using AI-powered search with a ChatGPT-style interface.
 
 ## Features
 
-- 📤 **Document Upload**: Upload `.txt` files to build your knowledge base
+- 🔐 **User Authentication**: Secure multi-user authentication with Clerk
+- 📤 **Document Upload**: Upload `.txt` files to build your private knowledge base
+- 💬 **ChatGPT-Style Interface**: Modern chat interface with sidebar navigation
 - 🔍 **Semantic Search**: Find relevant information using vector similarity search
 - 🤖 **AI-Powered Q&A**: Get accurate answers from your documents using GPT-4o-mini
+- 💾 **Auto-Save Chats**: Conversations automatically saved with timestamps
 - 📊 **Source Attribution**: See which documents and chunks were used for each answer
+- 🔒 **Data Isolation**: Each user's documents and chats are completely private
 - 💚 **Health Monitoring**: Built-in status page to check system health
-- ⚡ **Modern Stack**: Built with Next.js 14+, TypeScript, Tailwind CSS, and Prisma
+- 🌙 **Dark Theme**: Modern dark blue-black theme with grid background
+- ⚡ **Modern Stack**: Built with Next.js 16+, TypeScript, Tailwind CSS, and Prisma
 
 ## Tech Stack
 
 ### Frontend
-- **Next.js 14+** with App Router
+- **Next.js 16.1.6** with App Router and Turbopack
 - **TypeScript** for type safety
 - **Tailwind CSS** for styling
 - **Server Components** and **Server Actions** for optimal performance
+- **Clerk** for authentication and user management
 
 ### Backend
 - **Next.js API Routes** for REST endpoints
 - **Server Actions** for form handling and mutations
+- **Clerk Middleware** for route protection
 
 ### Database
 - **PostgreSQL** with **pgvector** extension (via Supabase)
 - **Prisma ORM** for type-safe database access
+- **Multi-tenant architecture** with userId-based isolation
 
 ### AI/ML
 - **OpenAI GPT-4o-mini** for answer generation
@@ -98,15 +106,33 @@ Edit `.env` with your actual values:
 DATABASE_URL="postgresql://user:password@host:5432/database?pgbouncer=true"
 DIRECT_URL="postgresql://user:password@host:5432/database"
 
+Edit `.env` with your actual values:
+
+```env
+# Database - Get from Supabase project settings
+DATABASE_URL="postgresql://user:password@host:6543/database?pgbouncer=true"
+DIRECT_URL="postgresql://user:password@host:5432/database"
+
 # OpenAI
 OPENAI_API_KEY="sk-..."
 
-# Supabase (optional)
-NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
-SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
+# Clerk Authentication - Get from https://dashboard.clerk.com
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_..."
+CLERK_SECRET_KEY="sk_test_..."
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/
+NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/
 ```
 
-### 3. Set Up Supabase Database
+### 3. Set Up Clerk Authentication
+
+1. Create a free account at [Clerk](https://dashboard.clerk.com/sign-up)
+2. Create a new application
+3. Copy your API keys from the dashboard
+4. Add them to your `.env` file
+
+### 4. Set Up Supabase Database
 
 1. Create a new project on [Supabase](https://supabase.com)
 2. Go to **SQL Editor** and run:
@@ -118,20 +144,20 @@ CREATE EXTENSION IF NOT EXISTS vector;
 
 3. Copy the connection string from **Project Settings → Database**
 
-### 4. Run Database Migrations
+### 5. Run Database Migrations
 
 ```bash
 # Generate Prisma Client
 npm run prisma:generate
 
-# Create database tables
+# Push database schema
 npm run prisma:migrate
 
 # (Optional) Open Prisma Studio to view data
 npm run prisma:studio
 ```
 
-### 5. Run Development Server
+### 6. Run Development Server
 
 ```bash
 npm run dev
@@ -141,49 +167,81 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Usage
 
-### Upload Documents
-1. Click "Choose File" and select a `.txt` file (max 10MB)
-2. Click "Upload Document"
-3. Wait for processing (chunking + embedding generation)
+### Sign In / Sign Up
+1. Visit [http://localhost:3000](http://localhost:3000)
+2. You'll be redirected to the sign-in page
+3. Create a new account or sign in with an existing one
+4. Access the main chat interface
 
-### Ask Questions
-1. Type your question in the text area
-2. Click "Get Answer"
-3. View the AI-generated answer and source chunks
+### Upload Documents
+1. Click "Manage Documents" from the sidebar or navigate to `/documents`
+2. Click "Choose File" and select a `.txt` file (max 10MB)
+3. Click "Upload Document"
+4. Wait for processing (chunking + embedding generation)
+
+### Chat and Ask Questions
+1. Type your question in the chat interface
+2. Press Enter or click the send button
+3. View the AI-generated answer with source attribution
+4. Chats are automatically saved with titles
+
+### Manage Chat History
+1. View all saved chats in the sidebar
+2. Click any chat to load the conversation
+3. Click "New Chat" to start fresh
+4. Delete unwanted chats using the trash icon
 
 ### Check System Health
-- Navigate to `/status` or click "System Status" button
-- View database and LLM connection status
+- Navigate to `/status` to view system health
+- Check database and LLM connection status
 
 ## Project Structure
 
 ```
 documind/
 ├── app/
-│   ├── actions/           # Server Actions
-│   │   ├── upload.ts      # Document upload & chunk storage
-│   │   └── query.ts       # Question answering with RAG
+│   ├── actions/              # Server Actions
+│   │   ├── upload.ts         # Document upload & chunk storage
+│   │   ├── query.ts          # RAG question answering
+│   │   └── chat.ts           # Chat session management
 │   ├── api/
-│   │   └── status/        # Health check endpoint
+│   │   └── status/           # Health check endpoint
 │   │       └── route.ts
-│   ├── status/            # Status page
+│   ├── sign-in/              # Clerk sign-in page
+│   │   └── [[...sign-in]]/
+│   │       └── page.tsx
+│   ├── sign-up/              # Clerk sign-up page
+│   │   └── [[...sign-up]]/
+│   │       └── page.tsx
+│   ├── documents/            # Document management page
 │   │   └── page.tsx
-│   ├── globals.css        # Global styles
-│   ├── layout.tsx         # Root layout
-│   └── page.tsx           # Home page
-├── components/            # React components
+│   ├── chats/                # Chat history pages
+│   │   ├── page.tsx
+│   │   └── [id]/
+│   │       └── page.tsx
+│   ├── status/               # Status page
+│   │   └── page.tsx
+│   ├── globals.css           # Global styles with dark theme
+│   ├── layout.tsx            # Root layout with ClerkProvider
+│   └── page.tsx              # Main chat interface
+├── components/               # React components
 │   ├── UploadForm.tsx
 │   ├── DocumentList.tsx
 │   ├── QuestionForm.tsx
-│   └── AnswerDisplay.tsx
-├── lib/                   # Core utilities
-│   ├── prisma.ts          # Prisma client singleton
-│   ├── openai.ts          # OpenAI client
-│   ├── chunking.ts        # Text chunking logic
-│   └── embeddings.ts      # Embedding generation
+│   ├── AnswerDisplay.tsx
+│   ├── ChatSidebar.tsx
+│   └── ToastProvider.tsx
+├── lib/                      # Core utilities
+│   ├── prisma.ts             # Prisma client singleton
+│   ├── openai.ts             # OpenAI client
+│   ├── chunking.ts           # Text chunking logic
+│   └── embeddings.ts         # Embedding generation
 ├── prisma/
-│   └── schema.prisma      # Database schema
-├── .env.example           # Environment variables template
+│   └── schema.prisma         # Database schema with userId fields
+├── middleware.ts             # Clerk authentication middleware
+├── .env                      # Environment variables (gitignored)
+├── .env.example              # Environment variables template
+├── AUTHENTICATION.md         # Authentication documentation
 ├── package.json
 ├── tsconfig.json
 ├── tailwind.config.ts
@@ -196,7 +254,16 @@ documind/
 
 1. Push code to GitHub
 2. Import project on [Vercel](https://vercel.com)
-3. Add environment variables in project settings
+3. Add environment variables in project settings:
+   - `DATABASE_URL`
+   - `DIRECT_URL`
+   - `OPENAI_API_KEY`
+   - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
+   - `CLERK_SECRET_KEY`
+   - `NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in`
+   - `NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up`
+   - `NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/`
+   - `NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/`
 4. Deploy!
 
 Vercel will automatically:
@@ -208,12 +275,25 @@ Vercel will automatically:
 
 Use your Supabase connection strings in Vercel environment variables. Ensure:
 - `pgvector` extension is enabled
-- Database migrations are applied (run locally or via Vercel build)
+- Database migrations are applied (run `npx prisma db push` locally)
+
+### Clerk Setup for Production
+
+In your Clerk dashboard:
+1. Add your production domain to allowed domains
+2. Update redirect URLs for production
+3. Use production API keys (starts with `pk_live_` and `sk_live_`)
 
 ## What's Done ✅
 
-- ✅ Next.js project with TypeScript and Tailwind CSS
-- ✅ Prisma schema with Document and Chunk models
+- ✅ Next.js 16 project with TypeScript and Tailwind CSS
+- ✅ **User authentication with Clerk (multi-tenant support)**
+- ✅ **ChatGPT-style interface with sidebar navigation**
+- ✅ **Auto-save chat functionality with timestamps**
+- ✅ **Dark theme with modern grid background**
+- ✅ **User profile management with UserButton**
+- ✅ **Data isolation - users only see their own content**
+- ✅ Prisma schema with Document, Chunk, and ChatSession models
 - ✅ Vector embeddings with OpenAI text-embedding-3-small
 - ✅ Intelligent text chunking (500-800 tokens, sentence-aware)
 - ✅ Document upload with automatic embedding generation
@@ -221,26 +301,36 @@ Use your Supabase connection strings in Vercel environment variables. Ensure:
 - ✅ Similarity search using pgvector cosine distance
 - ✅ Source attribution with document names and chunks
 - ✅ Status page with health checks
+- ✅ Toast notifications for user feedback
 - ✅ Responsive UI with Tailwind CSS
 - ✅ Error handling for common scenarios
-- ✅ Documentation files
+- ✅ Complete documentation (README, QUICKSTART, AUTHENTICATION)
 
-## What's Not Done / Future Improvements 🚀
+## Future Improvements 🚀
 
 - ⏳ **File format support**: Add support for PDF, DOCX, Markdown
-- ⏳ **Authentication**: User accounts and document privacy
-- ⏳ **Multi-document filtering**: Filter by multiple documents in Q&A
-- ⏳ **Chunk preview**: Show more/less buttons for long chunks
+- ⏳ **Streaming responses**: Stream LLM output in real-time
 - ⏳ **Document editing**: Edit or re-chunk existing documents
-- ⏳ **Export answers**: Download Q&A history as PDF or JSON
+- ⏳ **Export functionality**: Download chats as PDF or JSON
 - ⏳ **Advanced chunking**: Semantic chunking, metadata extraction
 - ⏳ **Rate limiting**: Prevent API abuse
 - ⏳ **Caching**: Cache embeddings and LLM responses
 - ⏳ **Analytics**: Track question patterns and answer quality
-- ⏳ **Dark mode**: Theme switcher
-- ⏳ **Streaming responses**: Stream LLM output in real-time
+- ⏳ **Collaborative features**: Share documents with other users
+- ⏳ **Mobile app**: Native iOS/Android applications
 
 ## Troubleshooting
+
+### "Blank sign-in page" or "Clerk not loading"
+- Verify your Clerk API keys are valid (not placeholder values)
+- Check that keys start with `pk_test_` and `sk_test_` for development
+- Ensure all Clerk environment variables are set correctly
+- Restart the dev server after changing `.env`
+
+### "Unauthorized" errors in the app
+- Make sure you're signed in
+- Clear cookies and sign in again
+- Check browser console for Clerk errors
 
 ### "pgvector extension not enabled"
 Run this in your Supabase SQL editor:

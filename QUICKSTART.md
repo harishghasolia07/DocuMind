@@ -2,6 +2,7 @@
 
 ## Prerequisites Checklist
 - [ ] Node.js 18+ installed
+- [ ] Clerk account created (free tier available)
 - [ ] Supabase account created
 - [ ] OpenAI API key obtained
 
@@ -30,12 +31,23 @@ DIRECT_URL="postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler
 # Get from OpenAI Platform → API Keys
 OPENAI_API_KEY="sk-..."
 
-# Optional: Supabase client (for future features)
-NEXT_PUBLIC_SUPABASE_URL="https://[project-ref].supabase.co"
-SUPABASE_SERVICE_ROLE_KEY="eyJ..."
+# Get from Clerk Dashboard → API Keys
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_..."
+CLERK_SECRET_KEY="sk_test_..."
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/
+NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/
 ```
 
-### 3. Enable pgvector in Supabase
+### 3. Set Up Clerk Authentication
+
+1. Go to [Clerk Dashboard](https://dashboard.clerk.com/sign-up)
+2. Create a new application (choose "Next.js" as framework)
+3. Copy the **Publishable Key** and **Secret Key**
+4. Paste them into your `.env` file
+
+### 4. Enable pgvector in Supabase
 
 1. Go to your Supabase project dashboard
 2. Navigate to **SQL Editor**
@@ -51,20 +63,20 @@ CREATE EXTENSION IF NOT EXISTS vector;
 SELECT * FROM pg_extension WHERE extname = 'vector';
 ```
 
-### 4. Set Up Database
+### 5. Set Up Database
 
 ```bash
 # Generate Prisma Client
 npm run prisma:generate
 
-# Create database tables
-npm run prisma:migrate
+# Push database schema
+npx prisma db push
 
 # Optional: Open Prisma Studio to view database
 npm run prisma:studio
 ```
 
-### 5. Run Development Server
+### 6. Run Development Server
 
 ```bash
 npm run dev
@@ -76,29 +88,66 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ### Quick Test Flow
 
-1. **Upload a Document**
+1. **Sign Up / Sign In**
+   - Visit [http://localhost:3000](http://localhost:3000)
+   - You'll be redirected to the sign-in page
+   - Click "Sign up" and create a test account
+   - Complete the sign-up process
+
+2. **Upload a Document**
+   - After signing in, click "Manage Documents" from the sidebar
    - Create a test file: `echo "The sky is blue. Grass is green. Water is wet." > test.txt`
    - Upload via the web interface
-   - Wait for "Upload successful" message
+   - Wait for "Upload successful" toast notification
 
-2. **Check Database**
+3. **Check Database**
    - Run: `npm run prisma:studio`
-   - Verify `Document` and `Chunk` tables have data
+   - Verify `Document` and `Chunk` tables have data with your userId
    - Check that `Chunk` has embeddings stored
+   - Verify `ChatSession` table exists
 
-3. **Ask a Question**
+4. **Ask a Question**
+   - Return to the main chat interface
    - Type: "What color is the sky?"
-   - Click "Get Answer"
+   - Press Enter or click send
    - Should see answer citing your document
+   - Chat should auto-save with a title
 
-4. **Check System Status**
+5. **Test Chat History**
+   - Click "New Chat" in the sidebar
+   - Ask another question
+   - Verify you can switch between chats in the sidebar
+   - Test deleting a chat
+
+6. **Check System Status**
    - Visit: [http://localhost:3000/status](http://localhost:3000/status)
    - Both Database and LLM should show "Connected"
 
+7. **Test Multi-User Isolation**
+   - Sign out using the UserButton in the sidebar
+   - Create a second account
+   - Upload a document and create a chat
+   - Verify you don't see the first user's documents or chats
+
 ## Troubleshooting
 
+### Error: "Blank sign-in page" or Clerk not loading
+**Solutions**:
+- Ensure Clerk API keys are real (not placeholder values)
+- Keys should start with `pk_test_` and `sk_test_` for development
+- Check all 7 Clerk environment variables are set in `.env`
+- Restart dev server: `pkill -f "next dev" && npm run dev`
+- Clear browser cache and cookies
+
+### Error: "Unauthorized" when using the app
+**Solutions**:
+- Make sure you're signed in (check for user icon in sidebar)
+- Sign out and sign back in
+- Check browser console for Clerk authentication errors
+- Verify middleware.ts is not blocking authenticated routes
+
 ### Error: "pgvector extension not enabled"
-**Solution**: Run the SQL command in step 3 above
+**Solution**: Run the SQL command in step 4 above
 
 ### Error: "Failed to generate embedding"
 **Solutions**:

@@ -256,16 +256,22 @@ model Chunk {
 
 ## Security Considerations
 
-### Current
-- Environment variable protection (`.env` in `.gitignore`)
+### Implemented ✅
+- Environment variable protection (`.env` in `.gitignored`)
 - Server-side API key usage (never exposed to client)
 - File type and size validation
+- **User authentication with Clerk** - secure sign-in/sign-up
+- **Multi-tenant architecture** - userId-based data isolation
+- **Document-level permissions** - users only access their own documents
+- **Route protection** - middleware guards all authenticated routes
+- **Server-side authorization** - all actions verify userId ownership
 
-### Future
-- **Authentication**: User accounts with NextAuth.js
-- **Rate limiting**: Prevent abuse
-- **Input sanitization**: Prevent prompt injection attacks
-- **Document-level permissions**: Multi-tenant support
+### Future Enhancements
+- **Rate limiting**: Prevent API abuse and DDoS
+- **Input sanitization**: Advanced prompt injection prevention
+- **Audit logging**: Track user actions and data access
+- **RBAC**: Role-based access control for team features
+- **Data encryption**: Encrypt sensitive document content at rest
 
 ---
 
@@ -278,4 +284,4 @@ model Chunk {
 
 ---
 
-**Last Updated**: February 11, 2026
+**Last Updated**: February 13, 2026
