@@ -56,7 +56,7 @@ function HomePage() {
                 <ShieldCheck className="w-5 h-5 text-white" strokeWidth={2.5} />
               </div>
               <h1 className="text-lg font-bold text-white tracking-tight">
-                Private Knowledge <span className="text-gradient">Q&A</span>
+                <span className="text-gradient">DocuMind</span>
               </h1>
             </div>
             <Link
@@ -82,7 +82,7 @@ function HomePage() {
                     <Sparkles className="w-12 h-12 text-cyan-400" />
                   </div>
                   <h1 className="text-4xl font-bold text-white">
-                    Welcome to Private Knowledge Q&A
+                    Welcome to DocuMind
                   </h1>
                   <p className="text-xl text-slate-400 max-w-2xl mx-auto">
                     Build your personal knowledge base and get AI-powered answers from your documents

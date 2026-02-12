@@ -1,4 +1,4 @@
-# Private Knowledge Q&A
+# DocuMind
 
 A production-ready RAG (Retrieval-Augmented Generation) application that allows users to upload text documents, generate embeddings, and ask questions using AI-powered search and OpenAI's language models.
 
@@ -79,7 +79,7 @@ A production-ready RAG (Retrieval-Augmented Generation) application that allows 
 
 ```bash
 git clone <your-repo-url>
-cd aggroso
+cd documind
 npm install
 ```
 
@@ -158,7 +158,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ## Project Structure
 
 ```
-aggroso/
+documind/
 ├── app/
 │   ├── actions/           # Server Actions
 │   │   ├── upload.ts      # Document upload & chunk storage

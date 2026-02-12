@@ -1,8 +1,8 @@
 # About This Project
 
-## What is Private Knowledge Q&A?
+## What is DocuMind?
 
-Private Knowledge Q&A is a web application that allows users to upload their own documents and ask questions about them using artificial intelligence. It uses **Retrieval-Augmented Generation (RAG)**, a technique that combines information retrieval with large language models to provide accurate, context-aware answers.
+DocuMind is a web application that allows users to upload their own documents and ask questions about them using artificial intelligence. It uses **Retrieval-Augmented Generation (RAG)**, a technique that combines information retrieval with large language models to provide accurate, context-aware answers.
 
 ## The Problem It Solves
 
@@ -53,7 +53,7 @@ This is a **production-ready MVP** (Minimum Viable Product) with core RAG functi
 
 ## Credits
 
-Built as a demonstration of RAG system implementation for the Aggroso internship assignment.
+Built as a demonstration of RAG system implementation and modern web development practices.
 
 **Technologies Used**:
 - Next.js, TypeScript, Tailwind CSS

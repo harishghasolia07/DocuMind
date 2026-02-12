@@ -1,6 +1,6 @@
 # AI Notes - Design Decisions & Technical Details
 
-This document captures the key AI/ML design decisions, trade-offs, and technical implementation details for the Private Knowledge Q&A application.
+This document captures the key AI/ML design decisions, trade-offs, and technical implementation details for the DocuMind application.
 
 ## Overview
 
