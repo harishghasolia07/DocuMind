@@ -2,6 +2,9 @@
 
 import { prisma } from '@/lib/prisma';
 
+// Force Node.js runtime for database Pool connections
+export const runtime = 'nodejs';
+
 type PrismaChatSession = {
   id: string;
   title: string;

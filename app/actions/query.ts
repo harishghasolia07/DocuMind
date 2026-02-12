@@ -4,6 +4,9 @@ import { prisma } from '@/lib/prisma';
 import { generateEmbedding } from '@/lib/embeddings';
 import { openai } from '@/lib/openai';
 
+// Force Node.js runtime for database Pool connections
+export const runtime = 'nodejs';
+
 export interface QueryResult {
   success: boolean;
   answer?: string;
