@@ -5,6 +5,8 @@ const nextConfig = {
       bodySizeLimit: '10mb',
     },
   },
+  // External packages for server components (moved out of experimental)
+  serverExternalPackages: ['pg'],
 };
 
 module.exports = nextConfig;

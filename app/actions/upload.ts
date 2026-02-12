@@ -4,9 +4,6 @@ import { prisma } from '@/lib/prisma';
 import { chunkText } from '@/lib/chunking';
 import { generateBatchEmbeddings } from '@/lib/embeddings';
 
-// Force Node.js runtime for database Pool connections
-export const runtime = 'nodejs';
-
 export interface UploadResult {
   success: boolean;
   documentId?: string;
