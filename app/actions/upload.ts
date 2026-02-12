@@ -1,5 +1,6 @@
 'use server';
 
+import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { chunkText } from '@/lib/chunking';
 import { generateBatchEmbeddings } from '@/lib/embeddings';
@@ -17,6 +18,12 @@ export interface UploadResult {
  */
 export async function uploadDocument(formData: FormData): Promise<UploadResult> {
   try {
+    // Get authenticated user
+    const { userId } = await auth();
+    if (!userId) {
+      return { success: false, error: 'Unauthorized. Please sign in.' };
+    }
+
     const file = formData.get('file') as File;
 
     if (!file) {
@@ -56,6 +63,7 @@ export async function uploadDocument(formData: FormData): Promise<UploadResult> 
       // Create document
       const document = await tx.document.create({
         data: {
+          userId,
           name: file.name,
           content: content,
         },
@@ -98,8 +106,18 @@ export async function uploadDocument(formData: FormData): Promise<UploadResult> 
  */
 export async function deleteDocument(documentId: string): Promise<{ success: boolean; error?: string }> {
   try {
+    // Get authenticated user
+    const { userId } = await auth();
+    if (!userId) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    // Only delete if document belongs to user
     await prisma.document.delete({
-      where: { id: documentId },
+      where: { 
+        id: documentId,
+        userId: userId,
+      },
     });
 
     return { success: true };
@@ -113,11 +131,18 @@ export async function deleteDocument(documentId: string): Promise<{ success: boo
 }
 
 /**
- * Get all documents
+ * Get all documents for the authenticated user
  */
 export async function getDocuments() {
   try {
+    // Get authenticated user
+    const { userId } = await auth();
+    if (!userId) {
+      return [];
+    }
+
     const documents = await prisma.document.findMany({
+      where: { userId },
       orderBy: { uploadedAt: 'desc' },
       include: {
         _count: {

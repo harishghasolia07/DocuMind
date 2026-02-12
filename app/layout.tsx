@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import { ClerkProvider } from '@clerk/nextjs';
 import { ToastProvider } from '@/components/Toast';
 import './globals.css';
 
@@ -16,12 +17,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${inter.className} antialiased min-h-screen`}>
-        <ToastProvider>
-          {children}
-        </ToastProvider>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body className={`${inter.className} antialiased min-h-screen`}>
+          <ToastProvider>
+            {children}
+          </ToastProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

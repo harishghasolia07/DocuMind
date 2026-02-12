@@ -1,5 +1,6 @@
 'use server';
 
+import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { generateEmbedding } from '@/lib/embeddings';
 import { openai } from '@/lib/openai';
@@ -23,13 +24,19 @@ export async function askQuestion(
   documentId?: string
 ): Promise<QueryResult> {
   try {
+    // Get authenticated user
+    const { userId } = await auth();
+    if (!userId) {
+      return { success: false, error: 'Unauthorized. Please sign in.' };
+    }
+
     // Validate input
     if (!question || question.trim().length === 0) {
       return { success: false, error: 'Question cannot be empty' };
     }
 
-    // Check if there are any documents
-    const documentCount = await prisma.document.count();
+    // Check if there are any documents for this user
+    const documentCount = await prisma.document.count({ where: { userId } });
     if (documentCount === 0) {
       return {
         success: false,
@@ -47,6 +54,16 @@ export async function askQuestion(
     let similarChunks;
     
     if (documentId) {
+      // First verify document ownership
+      const document = await prisma.document.findUnique({
+        where: { id: documentId },
+        select: { userId: true },
+      });
+
+      if (!document || document.userId !== userId) {
+        return { success: false, error: 'Document not found or unauthorized.' };
+      }
+
       similarChunks = await prisma.$queryRaw<
         Array<{
           id: string;
@@ -66,6 +83,7 @@ export async function askQuestion(
         LIMIT 5
       `;
     } else {
+      // Search across all user's documents
       similarChunks = await prisma.$queryRaw<
         Array<{
           id: string;
@@ -80,6 +98,8 @@ export async function askQuestion(
           c."documentId",
           (c.embedding <=> ${vectorString}::vector) as distance
         FROM "Chunk" c
+        INNER JOIN "Document" d ON c."documentId" = d.id
+        WHERE d."userId" = ${userId}
         ORDER BY distance ASC
         LIMIT 5
       `;

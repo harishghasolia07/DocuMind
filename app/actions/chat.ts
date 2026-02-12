@@ -1,5 +1,6 @@
 'use server';
 
+import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 
 type PrismaChatSession = {
@@ -56,6 +57,12 @@ export async function saveChatSession(
   sessionId?: string
 ): Promise<{ success: boolean; sessionId?: string; error?: string }> {
   try {
+    // Get authenticated user
+    const { userId } = await auth();
+    if (!userId) {
+      return { success: false, error: 'Unauthorized. Please sign in.' };
+    }
+
     console.log('[saveChatSession] Called with:', { 
       title, 
       messageCount: messages.length, 
@@ -68,7 +75,15 @@ export async function saveChatSession(
     const client = chatSessionClient();
 
     if (sessionId) {
-      // Update existing session
+      // Update existing session - verify ownership first
+      const existing = await client.findUnique({
+        where: { id: sessionId },
+      });
+
+      if (!existing || (existing as any).userId !== userId) {
+        return { success: false, error: 'Chat session not found or unauthorized.' };
+      }
+
       console.log('[saveChatSession] Updating session:', sessionId);
       session = await client.update({
         where: { id: sessionId },
@@ -84,6 +99,7 @@ export async function saveChatSession(
         data: {
           title,
           messages: JSON.stringify(messages),
+          userId,
         },
       });
     }
@@ -108,7 +124,14 @@ export async function saveChatSession(
  */
 export async function getChatSessions(): Promise<ChatSessionData[]> {
   try {
+    // Get authenticated user
+    const { userId } = await auth();
+    if (!userId) {
+      return [];
+    }
+
     const sessions = await chatSessionClient().findMany({
+      where: { userId },
       orderBy: {
         createdAt: 'desc',
       },
@@ -134,11 +157,17 @@ export async function getChatSession(
   id: string
 ): Promise<ChatSessionData | null> {
   try {
+    // Get authenticated user
+    const { userId } = await auth();
+    if (!userId) {
+      return null;
+    }
+
     const session = await chatSessionClient().findUnique({
       where: { id },
     });
 
-    if (!session) return null;
+    if (!session || (session as any).userId !== userId) return null;
 
     return {
       id: session.id,
@@ -160,6 +189,21 @@ export async function deleteChatSession(
   id: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // Get authenticated user
+    const { userId } = await auth();
+    if (!userId) {
+      return { success: false, error: 'Unauthorized. Please sign in.' };
+    }
+
+    // Verify ownership before deleting
+    const session = await chatSessionClient().findUnique({
+      where: { id },
+    });
+
+    if (!session || (session as any).userId !== userId) {
+      return { success: false, error: 'Chat session not found or unauthorized.' };
+    }
+
     await chatSessionClient().delete({
       where: { id },
     });

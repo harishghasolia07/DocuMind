@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { UserButton } from '@clerk/nextjs';
 import { getChatSessions, deleteChatSession, ChatSessionData } from '@/app/actions/chat';
 import { MessageSquare, Plus, Trash2, Upload, ChevronRight } from 'lucide-react';
 
@@ -128,6 +129,18 @@ export default function ChatSidebar({ onNewChat, onChatSelect, currentChatId }: 
           <span>Manage Documents</span>
           <ChevronRight className="w-4 h-4 ml-auto" />
         </Link>
+        
+        {/* User Profile */}
+        <div className="flex items-center gap-3 px-3 py-2 text-slate-300">
+          <UserButton 
+            appearance={{
+              elements: {
+                avatarBox: 'w-8 h-8',
+              },
+            }}
+          />
+          <span className="text-sm">My Account</span>
+        </div>
       </div>
     </div>
   );

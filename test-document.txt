@@ -1,0 +1,40 @@
+DocuMind Application Overview
+
+DocuMind is a Retrieval-Augmented Generation (RAG) application designed to help users query their private documents using artificial intelligence. The application combines document storage, vector embeddings, and large language models to provide accurate answers based on uploaded content.
+
+Key Features:
+- Multi-user authentication with Clerk
+- Secure document upload and storage
+- Vector similarity search using pgvector
+- ChatGPT-style interface for conversations
+- Auto-save chat history
+- Dark theme with modern UI
+
+Technology Stack:
+- Next.js 16.1.6 with App Router and Turbopack
+- PostgreSQL database with pgvector extension
+- Prisma ORM for database management
+- OpenAI GPT-4o-mini for question answering
+- OpenAI text-embedding-3-small for vector embeddings
+- Clerk for authentication
+- Tailwind CSS for styling
+
+How It Works:
+1. Users upload PDF or text documents through the web interface
+2. Documents are split into smaller chunks (approximately 500 tokens each)
+3. Each chunk is converted into a 1536-dimensional vector embedding
+4. When users ask questions, the question is also embedded
+5. The system finds the most similar document chunks using cosine similarity
+6. Relevant chunks are sent to GPT-4o-mini along with the question
+7. The AI generates an answer based only on the provided context
+8. Chat sessions are automatically saved with timestamps
+
+Security:
+All documents and chats are isolated by user ID. Users can only access their own data, ensuring complete privacy and preventing unauthorized access to sensitive information.
+
+Database Schema:
+- Document: Stores uploaded files with userId, name, content, and upload timestamp
+- Chunk: Contains document chunks with embeddings and token counts
+- ChatSession: Saves conversation history including questions, answers, and sources
+
+The application is deployed on Vercel with a Supabase-hosted PostgreSQL database, providing a scalable and reliable infrastructure for document-based question answering.

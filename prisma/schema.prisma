@@ -13,11 +13,13 @@ datasource db {
 
 model Document {
   id         String   @id @default(cuid())
+  userId     String   // Clerk user ID
   name       String
   content    String   @db.Text
   uploadedAt DateTime @default(now())
   chunks     Chunk[]
 
+  @@index([userId])
   @@index([uploadedAt])
 }
 
@@ -38,10 +40,12 @@ model Chunk {
 
 model ChatSession {
   id        String   @id @default(cuid())
+  userId    String   // Clerk user ID
   title     String
   messages  Json     // Array of {question, answer, sources, timestamp}
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([userId])
   @@index([createdAt])
 }
