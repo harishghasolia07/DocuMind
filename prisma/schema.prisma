@@ -1,0 +1,47 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  extensions = [vector]
+}
+
+model Document {
+  id         String   @id @default(cuid())
+  name       String
+  content    String   @db.Text
+  uploadedAt DateTime @default(now())
+  chunks     Chunk[]
+
+  @@index([uploadedAt])
+}
+
+model Chunk {
+  id         String                           @id @default(cuid())
+  documentId String
+  content    String                           @db.Text
+  embedding  Unsupported("vector(1536)")?
+  tokenCount Int
+  chunkIndex Int
+  createdAt  DateTime                         @default(now())
+
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@index([chunkIndex])
+}
+
+model ChatSession {
+  id        String   @id @default(cuid())
+  title     String
+  messages  Json     // Array of {question, answer, sources, timestamp}
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+}
