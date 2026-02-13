@@ -286,6 +286,7 @@ In your Clerk dashboard:
 
 ## What's Done ✅
 
+### Core Features
 - ✅ Next.js 16 project with TypeScript and Tailwind CSS
 - ✅ **User authentication with Clerk (multi-tenant support)**
 - ✅ **ChatGPT-style interface with sidebar navigation**
@@ -293,18 +294,31 @@ In your Clerk dashboard:
 - ✅ **Dark theme with modern grid background**
 - ✅ **User profile management with UserButton**
 - ✅ **Data isolation - users only see their own content**
+
+### RAG Implementation
 - ✅ Prisma schema with Document, Chunk, and ChatSession models
 - ✅ Vector embeddings with OpenAI text-embedding-3-small
 - ✅ Intelligent text chunking (500-800 tokens, sentence-aware)
 - ✅ Document upload with automatic embedding generation
 - ✅ RAG-based question answering with GPT-4o-mini
 - ✅ Similarity search using pgvector cosine distance
+- ✅ **Conversation-aware RAG with chat history context** 🆕
+- ✅ **Similarity threshold filtering (30% minimum relevance)** 🆕
+- ✅ **Increased retrieval from 5 to 10 chunks for better coverage** 🆕
+
+### User Experience
+- ✅ **Markdown-formatted answers with syntax highlighting** 🆕
 - ✅ Source attribution with document names and chunks
 - ✅ Status page with health checks
 - ✅ Toast notifications for user feedback
 - ✅ Responsive UI with Tailwind CSS
 - ✅ Error handling for common scenarios
-- ✅ Complete documentation (README, QUICKSTART, AUTHENTICATION)
+
+### Documentation
+- ✅ Complete documentation (README, QUICKSTART, AUTHENTICATION, IMPROVEMENTS)
+- ✅ AI implementation notes and design decisions
+
+**🆕 = Recently added improvements** • See [IMPROVEMENTS.md](IMPROVEMENTS.md) for details
 
 ## Future Improvements 🚀
 

@@ -16,11 +16,18 @@ export interface QueryResult {
   error?: string;
 }
 
+export interface ConversationMessage {
+  question: string;
+  answer: string;
+}
+
 /**
  * Answer a question using RAG (Retrieval-Augmented Generation)
+ * with conversation history awareness
  */
 export async function askQuestion(
   question: string,
+  conversationHistory: ConversationMessage[] = [],
   documentId?: string
 ): Promise<QueryResult> {
   try {
@@ -80,7 +87,7 @@ export async function askQuestion(
         FROM "Chunk" c
         WHERE c."documentId" = ${documentId}
         ORDER BY distance ASC
-        LIMIT 5
+        LIMIT 10
       `;
     } else {
       // Search across all user's documents
@@ -101,7 +108,7 @@ export async function askQuestion(
         INNER JOIN "Document" d ON c."documentId" = d.id
         WHERE d."userId" = ${userId}
         ORDER BY distance ASC
-        LIMIT 5
+        LIMIT 10
       `;
     }
 
@@ -112,8 +119,19 @@ export async function askQuestion(
       };
     }
 
+    // Filter out chunks with very low similarity (distance > 0.7 means similarity < 30%)
+    const SIMILARITY_THRESHOLD = 0.7; // Only include chunks with distance < 0.7 (30%+ similarity)
+    const relevantChunks = similarChunks.filter((chunk: any) => chunk.distance < SIMILARITY_THRESHOLD);
+
+    if (relevantChunks.length === 0) {
+      return {
+        success: false,
+        error: 'No sufficiently relevant content found in documents. Try rephrasing your question or upload more related documents.',
+      };
+    }
+
     // Get document names for the chunks
-    const documentIds = [...new Set(similarChunks.map((c: { documentId: string }) => c.documentId))];
+    const documentIds = [...new Set(relevantChunks.map((c: { documentId: string }) => c.documentId))];
     const documents = await prisma.document.findMany({
       where: { id: { in: documentIds } },
       select: { id: true, name: true },
@@ -122,7 +140,7 @@ export async function askQuestion(
     const documentMap = new Map(documents.map((d: { id: string; name: string }) => [d.id, d.name]));
 
     // Build context from retrieved chunks
-    const context = similarChunks
+    const context = relevantChunks
       .map((chunk: { documentId: string; content: string }, index: number) => {
         const docName = documentMap.get(chunk.documentId) || 'Unknown';
         return `[Source ${index + 1}: ${docName}]\n${chunk.content}`;
@@ -137,17 +155,33 @@ IMPORTANT RULES:
 2. If the answer is not found in the context, respond with "Not found in documents."
 3. Cite which document(s) you used to answer the question
 4. Be concise and accurate
-5. Do not make up information or use external knowledge`;
+5. Do not make up information or use external knowledge
+6. Use conversation history to understand follow-up questions and references (e.g., "it", "that", "how about")
+7. Format your response using markdown for better readability:
+   - Use **bold** for emphasis
+   - Use \`code\` for technical terms
+   - Use bullet points for lists
+   - Use numbered lists for steps
+   - Use code blocks for code snippets`;
 
-    const userPrompt = `Context from documents:
+    // Build conversation context if history exists
+    let conversationContext = '';
+    if (conversationHistory.length > 0) {
+      conversationContext = '\n\nPrevious conversation:\n' + 
+        conversationHistory.slice(-3).map((msg, idx) => 
+          `Q${idx + 1}: ${msg.question}\nA${idx + 1}: ${msg.answer}`
+        ).join('\n\n') + '\n\n---\n';
+    }
+
+    const userPrompt = `${conversationContext}Context from documents:
 
 ${context}
 
 ---
 
-Question: ${question}
+Current Question: ${question}
 
-Please answer the question based on the context above.`;
+Please answer the current question based on the context above. If it's a follow-up question, use the conversation history to understand what the user is referring to.`;
 
     // Call OpenAI to generate the answer
     const completion = await openai.chat.completions.create({
@@ -157,13 +191,13 @@ Please answer the question based on the context above.`;
         { role: 'user', content: userPrompt },
       ],
       temperature: 0.3,
-      max_tokens: 500,
+      max_tokens: 1000, // Increased for more comprehensive answers
     });
 
     const answer = completion.choices[0]?.message?.content || 'No answer generated';
 
-    // Prepare sources with similarity scores
-    const sources = similarChunks.map((chunk: any) => ({
+    // Prepare sources with similarity scores (only relevant chunks)
+    const sources = relevantChunks.map((chunk: any) => ({
       documentName: documentMap.get(chunk.documentId) || 'Unknown',
       chunkText: chunk.content,
       similarity: Math.round((1 - chunk.distance) * 100) / 100, // Convert distance to similarity

@@ -82,7 +82,13 @@ export default function QuestionForm({ initialSessionId }: QuestionFormProps) {
     setIsAsking(true);
     setQuestion(''); // Clear input immediately
 
-    const response = await askQuestion(currentQuestion);
+    // Prepare conversation history for context (last 3 exchanges)
+    const conversationContext = chatHistory.slice(-3).map(item => ({
+      question: item.question,
+      answer: item.result.answer || ''
+    }));
+
+    const response = await askQuestion(currentQuestion, conversationContext);
     
     // Add to chat history
     const newHistory = [...chatHistory, {

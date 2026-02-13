@@ -1,5 +1,7 @@
 import { QueryResult } from '@/app/actions/query';
 import { Bot, FileText, Quote } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface AnswerDisplayProps {
   result: QueryResult;
@@ -28,9 +30,29 @@ export default function AnswerDisplay({ result }: AnswerDisplayProps) {
           <Bot className="w-6 h-6" />
         </div>
         <div className="flex-1 space-y-2">
-          <div className="prose prose-blue max-w-none">
-            <div className="bg-slate-800/50 p-6 rounded-2xl rounded-tl-none border border-slate-700/50 text-slate-100 leading-relaxed whitespace-pre-wrap">
-              {result.answer}
+          <div className="prose prose-invert prose-sm max-w-none">
+            <div className="bg-slate-800/50 p-6 rounded-2xl rounded-tl-none border border-slate-700/50 text-slate-100 leading-relaxed">
+              <ReactMarkdown 
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  p: ({node, ...props}) => <p className="mb-4 last:mb-0" {...props} />,
+                  ul: ({node, ...props}) => <ul className="list-disc list-inside mb-4 space-y-1" {...props} />,
+                  ol: ({node, ...props}) => <ol className="list-decimal list-inside mb-4 space-y-1" {...props} />,
+                  li: ({node, ...props}) => <li className="text-slate-200" {...props} />,
+                  code: ({node, inline, ...props}: any) => 
+                    inline ? 
+                      <code className="bg-slate-900/80 text-cyan-400 px-1.5 py-0.5 rounded text-sm" {...props} /> :
+                      <code className="block bg-slate-900/80 text-cyan-300 p-3 rounded-lg my-2 overflow-x-auto text-sm" {...props} />,
+                  strong: ({node, ...props}) => <strong className="text-white font-semibold" {...props} />,
+                  em: ({node, ...props}) => <em className="text-slate-300" {...props} />,
+                  h1: ({node, ...props}) => <h1 className="text-xl font-bold mb-3 text-white" {...props} />,
+                  h2: ({node, ...props}) => <h2 className="text-lg font-bold mb-2 text-white" {...props} />,
+                  h3: ({node, ...props}) => <h3 className="text-base font-semibold mb-2 text-white" {...props} />,
+                  blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-cyan-500 pl-4 italic text-slate-300 my-4" {...props} />,
+                }}
+              >
+                {result.answer || ''}
+              </ReactMarkdown>
             </div>
           </div>
         </div>
