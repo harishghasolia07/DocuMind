@@ -303,7 +303,7 @@ In your Clerk dashboard:
 - ✅ RAG-based question answering with GPT-4o-mini
 - ✅ Similarity search using pgvector cosine distance
 - ✅ **Conversation-aware RAG with chat history context** 🆕
-- ✅ **Similarity threshold filtering (30% minimum relevance)** 🆕
+- ✅ **Similarity threshold filtering (25% minimum relevance)** 🆕
 - ✅ **Increased retrieval from 5 to 10 chunks for better coverage** 🆕
 
 ### User Experience

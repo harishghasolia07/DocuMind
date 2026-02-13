@@ -119,8 +119,9 @@ export async function askQuestion(
       };
     }
 
-    // Filter out chunks with very low similarity (distance > 0.7 means similarity < 30%)
-    const SIMILARITY_THRESHOLD = 0.7; // Only include chunks with distance < 0.7 (30%+ similarity)
+    // Filter out chunks with very low similarity (distance > 0.75 means similarity < 25%)
+    // More forgiving than before to catch relevant content even with paraphrased questions
+    const SIMILARITY_THRESHOLD = 0.75; // Only include chunks with distance < 0.75 (25%+ similarity)
     const relevantChunks = similarChunks.filter((chunk: any) => chunk.distance < SIMILARITY_THRESHOLD);
 
     if (relevantChunks.length === 0) {

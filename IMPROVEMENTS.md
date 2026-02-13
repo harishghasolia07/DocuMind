@@ -24,19 +24,21 @@ This document tracks the latest improvements made to DocuMind before final submi
 
 ---
 
-### 2. ✅ Similarity Threshold Filter (30% minimum)
-**Problem**: Irrelevant documents with 2% similarity were shown as sources.
+### 2. ✅ Similarity Threshold Filter (25% minimum)
+**Problem**: Irrelevant documents with 2% similarity were shown as sources, but threshold was too strict and filtered valid questions.
 
 **Solution**:
-- Added `SIMILARITY_THRESHOLD = 0.7` (30% minimum similarity)
-- Filters out chunks with distance > 0.7 before using them
+- Added `SIMILARITY_THRESHOLD = 0.75` (25% minimum similarity)
+- Filters out chunks with distance > 0.75 before using them
 - Only meaningfully relevant documents appear in results
+- Balanced to catch paraphrased questions while filtering truly irrelevant content
 
 **Implementation**:
 - Filter applied in `app/actions/query.ts` after similarity search
 - Better error message when no relevant content found
+- Optimized for natural language variation
 
-**Result**: Only relevant sources shown (e.g., Eiffel Tower doc no longer appears for tech stack questions)
+**Result**: Only relevant sources shown, while allowing for question variations (e.g., "How does it work?" still finds "How It Works:" sections)
 
 ---
 
