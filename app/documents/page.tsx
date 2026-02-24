@@ -56,7 +56,7 @@ export default function DocumentsPage() {
         <div className="mt-8 bg-slate-900/30 backdrop-blur-xl border border-slate-700/30 rounded-xl p-6">
           <h3 className="text-lg font-semibold text-white mb-3">About Documents</h3>
           <div className="space-y-2 text-sm text-slate-300">
-            <p>• Only <span className="text-cyan-400 font-medium">.txt</span> files are currently supported</p>
+            <p>• Supported formats: <span className="text-cyan-400 font-medium">.txt, .md, .csv, .json, .pdf, .docx</span></p>
             <p>• Documents are automatically chunked and embedded using OpenAI</p>
             <p>• Each chunk is stored with vector embeddings for semantic search</p>
             <p>• You can ask questions about your documents in the main chat interface</p>
