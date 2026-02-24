@@ -6,7 +6,28 @@ import { saveChatSession, ChatMessage } from '@/app/actions/chat';
 import { uploadDocument } from '@/app/actions/upload';
 import AnswerDisplay from './AnswerDisplay';
 import { useToast } from './Toast';
-import { Send, Sparkles, Trash2, Save, Plus } from 'lucide-react';
+import { Send, Sparkles, Trash2, Save, Plus, Mic, MicOff } from 'lucide-react';
+
+// Browser Speech Recognition types (not always in TS lib)
+interface SpeechRecognitionResultItem { transcript: string; }
+interface SpeechRecognitionResult { isFinal: boolean; 0: SpeechRecognitionResultItem; }
+interface SR_Event { resultIndex: number; results: { length: number; [i: number]: SpeechRecognitionResult } }
+interface SpeechRecognitionInstance {
+  lang: string;
+  interimResults: boolean;
+  continuous: boolean;
+  start(): void;
+  stop(): void;
+  onstart: (() => void) | null;
+  onresult: ((e: SR_Event) => void) | null;
+  onend: (() => void) | null;
+  onerror: (() => void) | null;
+}
+type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance;
+interface SpeechWindow {
+  SpeechRecognition?: SpeechRecognitionConstructor;
+  webkitSpeechRecognition?: SpeechRecognitionConstructor;
+}
 
 interface ChatHistoryItem {
   question: string;
@@ -26,9 +47,78 @@ export default function QuestionForm({ initialSessionId }: QuestionFormProps) {
   const [chatHistory, setChatHistory] = useState<ChatHistoryItem[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error' | null>(null);
+  const [isListening, setIsListening] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const { addToast } = useToast();
+
+  /** Toggle voice recognition */
+  const toggleVoice = () => {
+    const SpeechRecognition =
+      (window as unknown as SpeechWindow).SpeechRecognition ||
+      (window as unknown as SpeechWindow).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      addToast({ type: 'error', title: 'Not Supported', message: 'Voice input is not supported in your browser.' });
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = true;
+    recognition.continuous = true;   // keep listening until user stops manually
+
+    // Snapshot what's already in the box so we append cleanly without duplication
+    const baseText = question;
+    let finalTranscript = '';
+
+    recognition.onstart = () => setIsListening(true);
+
+    recognition.onresult = (event: SR_Event) => {
+      let interim = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const t = event.results[i][0].transcript;
+        if (event.results[i].isFinal) finalTranscript += t;
+        else interim = t;
+      }
+      const combined = (baseText + (baseText && (finalTranscript || interim) ? ' ' : '') + finalTranscript + interim).trimStart();
+      setQuestion(combined);
+      setTimeout(autoResize, 0);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      const finalText = (baseText + (baseText && finalTranscript ? ' ' : '') + finalTranscript).trimStart();
+      if (finalTranscript) {
+        setQuestion(finalText);
+        setTimeout(autoResize, 0);
+      }
+    };
+
+    recognition.onerror = () => {
+      setIsListening(false);
+      addToast({ type: 'error', title: 'Voice Error', message: 'Voice recognition failed. Please try again.' });
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+  };
+
+  /** Auto-resize textarea to fit its content, capped at ~200px */
+  const autoResize = () => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 200) + 'px';
+  };
 
   // Load chat session if initialSessionId is provided
   useEffect(() => {
@@ -81,6 +171,10 @@ export default function QuestionForm({ initialSessionId }: QuestionFormProps) {
     const currentQuestion = question.trim();
     setIsAsking(true);
     setQuestion(''); // Clear input immediately
+    // Reset textarea height after clearing
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
 
     // Prepare conversation history for context (last 3 exchanges)
     const conversationContext = chatHistory.slice(-3).map(item => ({
@@ -176,11 +270,13 @@ export default function QuestionForm({ initialSessionId }: QuestionFormProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.name.endsWith('.txt')) {
+    const ALLOWED = new Set(['.txt', '.md', '.csv', '.json', '.pdf', '.docx']);
+    const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+    if (!ALLOWED.has(ext)) {
       addToast({
         type: 'error',
         title: 'Invalid File Type',
-        message: 'Please upload only .txt files'
+        message: 'Allowed: .txt, .md, .csv, .json, .pdf, .docx'
       });
       return;
     }
@@ -228,9 +324,10 @@ export default function QuestionForm({ initialSessionId }: QuestionFormProps) {
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden p-6">
-      {/* Chat History Area */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto mb-6 space-y-6 custom-scrollbar pr-2">
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Chat History Area — full-width scroll, content constrained */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar">
+        <div className="max-w-6xl mx-auto w-full px-4 py-6 space-y-6">
         {isLoading ? (
           <div className="h-full flex items-center justify-center">
             <div className="w-8 h-8 border-4 border-blue-400 border-t-transparent rounded-full animate-spin" />
@@ -272,10 +369,11 @@ export default function QuestionForm({ initialSessionId }: QuestionFormProps) {
             </div>
           </div>
         )}
-      </div>
+      </div>{/* end max-w-3xl content */}
+      </div>{/* end scroll area */}
 
-      {/* Input Area with Action Buttons */}
-      <div className="space-y-2">
+      {/* Input Area — same max-width as messages */}
+      <div className="max-w-6xl mx-auto w-full px-4 pb-5 space-y-2">
         {chatHistory.length > 0 && (
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
@@ -321,42 +419,67 @@ export default function QuestionForm({ initialSessionId }: QuestionFormProps) {
         )}
         
         <form onSubmit={handleSubmit} className="relative">
-          <textarea
-            id="question"
-            name="question"
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={isAsking}
-            rows={3}
-            placeholder="Ask a question about your documents... (Press Enter to send)"
-            className="block w-full pl-12 pr-14 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed resize-none transition-all font-medium text-white placeholder:text-slate-500"
-          />
-          {/* Hidden File Input */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".txt"
-            onChange={handleFileUpload}
-            className="hidden"
-          />
-          {/* Document Attachment Button */}
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="absolute left-3 bottom-3 p-2 bg-slate-700/50 hover:bg-cyan-500/20 text-slate-400 hover:text-cyan-400 rounded-lg transition-all border border-slate-600 hover:border-cyan-500/50"
-            title="Upload Document"
-          >
-            <Plus className="w-5 h-5" />
-          </button>
-          {/* Send Button */}
-          <button
-            type="submit"
-            disabled={isAsking || !question.trim()}
-            className="absolute right-3 bottom-3 p-2.5 bg-gradient-to-br from-blue-500 to-cyan-400 hover:from-blue-600 hover:to-cyan-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-blue-500/30"
-          >
-            <Send className="w-4 h-4" />
-          </button>
+          {/* Single-row input bar: [Plus] [textarea] [Send] */}
+          <div className="flex items-end gap-2 bg-slate-800/50 border border-slate-700/50 rounded-3xl px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500/50 focus-within:border-blue-500 transition-all">
+
+            {/* Hidden File Input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".txt,.md,.csv,.json,.pdf,.docx"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+
+            {/* Attachment button */}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="shrink-0 mb-0.5 p-1.5 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10 rounded-full transition-all"
+              title="Attach document"
+            >
+              <Plus className="w-5 h-5" />
+            </button>
+
+            {/* Auto-grow textarea */}
+            <textarea
+              ref={textareaRef}
+              id="question"
+              name="question"
+              value={question}
+              onChange={(e) => { setQuestion(e.target.value); autoResize(); }}
+              onKeyDown={handleKeyDown}
+              disabled={isAsking}
+              rows={1}
+              placeholder="Ask a question about your documents..."
+              className="flex-1 bg-transparent border-none outline-none resize-none leading-6 py-0.5 text-white placeholder:text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed font-medium overflow-y-auto"
+              style={{ minHeight: '28px', maxHeight: '200px' }}
+            />
+
+            {/* Mic button */}
+            <button
+              type="button"
+              onClick={toggleVoice}
+              disabled={isAsking}
+              className={`shrink-0 mb-0.5 p-1.5 rounded-full transition-all ${
+                isListening
+                  ? 'bg-red-500 text-white shadow-lg shadow-red-500/40 animate-pulse'
+                  : 'text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10'
+              } disabled:opacity-40 disabled:cursor-not-allowed`}
+              title={isListening ? 'Stop recording' : 'Voice input'}
+            >
+              {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+            </button>
+
+            {/* Send button */}
+            <button
+              type="submit"
+              disabled={isAsking || !question.trim()}
+              className="shrink-0 mb-0.5 p-1.5 bg-gradient-to-br from-blue-500 to-cyan-400 hover:from-blue-600 hover:to-cyan-500 text-white rounded-full disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md shadow-blue-500/30"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </div>
         </form>
       </div>
     </div>
