@@ -5,14 +5,29 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import QuestionForm from '@/components/QuestionForm';
 import ChatSidebar from '@/components/ChatSidebar';
 import Link from 'next/link';
-import { Settings, ShieldCheck, Heart, Upload, FileText, MessageSquare, ArrowRight, Sparkles } from 'lucide-react';
+import { Settings, ShieldCheck, Upload, FileText, MessageSquare, ArrowRight, Sparkles, Menu } from 'lucide-react';
 
 function HomePage() {
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [isNewChat, setIsNewChat] = useState(false);
   const [chatKey, setChatKey] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
+
+  // Detect screen size and auto-collapse on mobile
+  useEffect(() => {
+    const update = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      // Auto-collapse on mobile, auto-expand on desktop
+      setSidebarOpen(!mobile);
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
 
   // Check if we should start a new chat from URL params
   useEffect(() => {
@@ -20,7 +35,6 @@ function HomePage() {
       setSelectedChatId(null);
       setIsNewChat(true);
       setChatKey(prev => prev + 1);
-      // Clear the URL parameter
       router.replace('/', { scroll: false });
     }
   }, [searchParams, router]);
@@ -40,18 +54,32 @@ function HomePage() {
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Left Sidebar - Chat History */}
-      <ChatSidebar 
-        onNewChat={handleNewChat} 
+      <ChatSidebar
+        isOpen={sidebarOpen}
+        isMobile={isMobile}
+        onToggle={() => setSidebarOpen(o => !o)}
+        onClose={() => setSidebarOpen(false)}
+        onNewChat={handleNewChat}
         onChatSelect={handleChatSelect}
         currentChatId={selectedChatId}
       />
 
       {/* Right Side - Main Chat */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Top Header */}
         <header className="bg-slate-900/80 backdrop-blur-xl border-b border-slate-700/50 p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
+              {/* Mobile hamburger button */}
+              {isMobile && (
+                <button
+                  onClick={() => setSidebarOpen(true)}
+                  className="p-2 text-slate-300 hover:text-white hover:bg-slate-800/50 rounded-lg transition-all"
+                  title="Open sidebar"
+                >
+                  <Menu className="w-5 h-5" />
+                </button>
+              )}
               <div className="p-2 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl shadow-lg shadow-blue-500/30">
                 <ShieldCheck className="w-5 h-5 text-white" strokeWidth={2.5} />
               </div>
@@ -129,7 +157,7 @@ export default function Home() {
   return (
     <Suspense fallback={
       <div className="flex h-screen overflow-hidden">
-        <div className="w-72 bg-slate-900/90 backdrop-blur-xl border-r border-slate-700/50" />
+        <div className="hidden md:block w-72 bg-slate-900/90 backdrop-blur-xl border-r border-slate-700/50" />
         <div className="flex-1 flex items-center justify-center">
           <div className="w-8 h-8 border-4 border-blue-400 border-t-transparent rounded-full animate-spin" />
         </div>
