@@ -12,9 +12,12 @@ export default function UploadForm({ onUploadSuccess }: { onUploadSuccess?: () =
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
+  const ALLOWED = new Set(['.txt', '.md', '.csv', '.json', '.pdf', '.docx']);
+
   const handleUpload = async (file: File) => {
-    if (!file.name.endsWith('.txt')) {
-      setMessage({ type: 'error', text: 'Only .txt files are allowed' });
+    const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+    if (!ALLOWED.has(ext)) {
+      setMessage({ type: 'error', text: 'Unsupported file type. Allowed: .txt, .md, .csv, .json, .pdf, .docx' });
       return;
     }
 
@@ -107,13 +110,13 @@ export default function UploadForm({ onUploadSuccess }: { onUploadSuccess?: () =
           {isUploading ? 'Uploading...' : 'Click to upload or drag & drop'}
         </p>
         <p className="text-xs text-slate-400">
-          Only .txt files allowed
+          .txt, .md, .csv, .json, .pdf, .docx
         </p>
 
         <input
           ref={fileInputRef}
           type="file"
-          accept=".txt"
+          accept=".txt,.md,.csv,.json,.pdf,.docx"
           onChange={onFileSelect}
           className="hidden"
           disabled={isUploading}

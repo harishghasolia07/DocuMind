@@ -4,6 +4,7 @@ import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { chunkText } from '@/lib/chunking';
 import { generateBatchEmbeddings } from '@/lib/embeddings';
+import { extractTextFromFile, ALLOWED_EXTENSIONS } from '@/lib/fileParser';
 
 export interface UploadResult {
   success: boolean;
@@ -31,8 +32,12 @@ export async function uploadDocument(formData: FormData): Promise<UploadResult> 
     }
 
     // Validate file type
-    if (!file.name.endsWith('.txt')) {
-      return { success: false, error: 'Only .txt files are allowed' };
+    const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.has(ext)) {
+      return {
+        success: false,
+        error: `Unsupported file type "${ext}". Allowed: ${[...ALLOWED_EXTENSIONS].join(', ')}`,
+      };
     }
 
     // Validate file size (max 10MB)
@@ -40,8 +45,8 @@ export async function uploadDocument(formData: FormData): Promise<UploadResult> 
       return { success: false, error: 'File size must be less than 10MB' };
     }
 
-    // Read file content
-    const content = await file.text();
+    // Extract plain text from the file (handles PDF, DOCX, TXT, MD, CSV, JSON)
+    const content = await extractTextFromFile(file);
 
     if (!content || content.trim().length === 0) {
       return { success: false, error: 'File is empty' };
