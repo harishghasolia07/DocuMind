@@ -15,7 +15,7 @@ export default function LandingPage() {
       <div className="pointer-events-none absolute bottom-[10%] left-[10%] w-[40%] h-[40%] rounded-full bg-blue-600/10 blur-[130px]" />
 
       {/* ── Navbar ── */}
-      <nav className="sticky top-0 z-50 flex items-center justify-between px-6 py-4 bg-glass border-b border-white/5 shadow-sm shadow-black/20 backdrop-blur-xl">
+      <nav className="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 py-4 bg-slate-950/30 border-b border-white/10 shadow-sm shadow-black/10 backdrop-blur-xl transition-all">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <div className="p-1.5 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-lg shadow-lg shadow-blue-500/30">
@@ -46,7 +46,7 @@ export default function LandingPage() {
       </nav>
 
       {/* ── Hero ── */}
-      <section className="relative px-6 pt-24 pb-28 text-center">
+      <section className="relative px-6 pt-32 pb-28 text-center mt-10">
         <div className="max-w-4xl mx-auto relative z-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 mb-8 backdrop-blur-sm">
             <Sparkles className="w-4 h-4 text-blue-500" />
