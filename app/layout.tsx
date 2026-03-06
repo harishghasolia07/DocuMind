@@ -18,8 +18,8 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en">
-        <body className={`${inter.className} antialiased min-h-screen`}>
+      <html lang="en" suppressHydrationWarning>
+        <body className={`${inter.className} antialiased min-h-screen`} suppressHydrationWarning>
           <ToastProvider>
             {children}
           </ToastProvider>

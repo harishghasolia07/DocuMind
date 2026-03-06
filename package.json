@@ -14,6 +14,7 @@
   "description": "DocuMind - A multi-user RAG application with authentication for secure document-based question answering",
   "dependencies": {
     "@clerk/nextjs": "^6.37.3",
+    "@clerk/themes": "^2.4.57",
     "@prisma/adapter-pg": "^7.4.0",
     "@prisma/client": "^7.4.0",
     "@supabase/supabase-js": "^2.95.3",
